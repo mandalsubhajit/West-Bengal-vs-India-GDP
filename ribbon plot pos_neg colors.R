@@ -12,6 +12,7 @@ names(data)[3] = "value"
 ribbon.data = ddply(data, c("x"), summarize, ymin=min(value), ymax=max(value))
 
 # For Dynamic Coloring of Area between Lines (Different shades for Positive and Negative)
+# The following function divides the chart into segments based on the relative position of the lines
 GetSegs <- function(x) {
   segs = x[x$variable=='West.Bengal', ]$value >= x[x$variable=='India', ]$value
   segs.rle = rle(segs)
@@ -37,23 +38,13 @@ tmc_rect <- data.frame(xmin=2010, xmax=2016, ymin=-Inf, ymax=Inf)
 
 ####### End of Creation of Political Regime Data #######
 
-#open file for saving our plot
+# open file for saving our plot
 jpeg(filename="WBvsIndia.jpeg", width=1600, height=900)
 
 # Now we are ready to plot our data
 require(ggplot2)
 require(scales)
-ggplot(data=gdp.data) +
-  geom_line(aes(x=Year, y = West.Bengal, colour="West Bengal")) +
-  geom_line(aes(x=Year, y = India, colour="India")) +
-  scale_colour_manual("", 
-                      breaks = c("West Bengal", "India"),
-                      values = c("West Bengal"="blue", "India"="black")) +
-  labs(y="GDP Growth Rate") +
-  scale_y_continuous(labels=percent) +
-  # next line creates the ribbon plot for coloring the area between lines
-  geom_ribbon(data=ribbon.data, aes(x=x, ymin=ymin, ymax=ymax, group=group, fill=on.top), alpha=0.7) +
-  scale_fill_manual(values = c("West.Bengal" = "white", "India" = "black")) +
+ggplot(data=gdp.data, aes(x=Year)) +
   # show political regimes
   geom_rect(data=left_rect, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
             fill="red",
@@ -65,6 +56,18 @@ ggplot(data=gdp.data) +
             inherit.aes = FALSE) +
   annotate(geom="text", x=1995, y=0, label= "Left Regime", size=10) + 
   annotate(geom="text", x =2013, y=0, label = "TMC Regime", size=10) +
+  # plot lines for the state and national GDP growth
+  geom_line(aes(x=Year, y = West.Bengal, colour="West Bengal"), size=2) +
+  geom_line(aes(x=Year, y = India, colour="India")) +
+  scale_colour_manual("", 
+                      breaks = c("West Bengal", "India"),
+                      values = c("West Bengal"="blue", "India"="black")) +
+  labs(y="GDP Growth Rate") +
+  scale_y_continuous(labels=percent) +
+  # create the ribbon plot for coloring the area between lines
+  geom_ribbon(data=ribbon.data, aes(x=x, ymin=ymin, ymax=ymax, group=group, fill=on.top), alpha=0.7) +
+  scale_fill_manual(values = c("West.Bengal" = "white", "India" = "black")) +
+  # style and font adjustment
   guides(fill=FALSE) +
   theme(legend.position="top", legend.text=element_text(size=25),
         text = element_text(size=20))
